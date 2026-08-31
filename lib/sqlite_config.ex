@@ -2,6 +2,7 @@ defmodule SqliteConfig do
 
   alias SqliteConfig.{StageRepo, Repo}
 
+  @spec stage_and_deploy(String.t(), (atom() -> :ok | {:ok, any()} | {:error, any()}), atom()) :: :ok | {:error, any()}
   def stage_and_deploy(schema_sql, staging_fun, target \\ Repo) do
     with {:ok, _} <- reset_repo(StageRepo, schema_sql),
           :ok     <- execute_staging_fun(staging_fun),
