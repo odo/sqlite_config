@@ -29,6 +29,24 @@ defmodule SqliteConfigTest do
     assert {:error, %Exqlite.Error{message: "attempt to write a readonly database"}} = Repo.query("insert into foo values (1)")
   end
   
+  test "accepts new multiline schema" do
+    dump =
+    """
+    create table foo (bar int);
+    create table bar (foo int);
+    insert into foo values (1);
+    insert into bar values (2);
+    """
+    assert :ok == SqliteConfig.stage_and_deploy(
+      dump,
+      fn(repo) ->
+        {:ok, %Exqlite.Result{rows: [[1]]}} = repo.query("select * from foo")
+        {:ok, %Exqlite.Result{rows: [[2]]}} = repo.query("select * from bar")
+      end
+    )
+    assert_tables(["foo", "bar"])
+  end
+
   test "rejects bad schema" do
     assert {:error, _} = SqliteConfig.stage_and_deploy(
       "create that beautiful table foo (bar int)",
@@ -63,6 +81,7 @@ defmodule SqliteConfigTest do
     assert {:ok, %Exqlite.Result{rows: []}} = Repo.query("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'")
   end
   defp assert_tables(tables) do
-    assert {:ok, %Exqlite.Result{rows: [^tables]}} = Repo.query("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'")
+    tables = tables |> Enum.map(&[&1])
+    assert {:ok, %Exqlite.Result{rows: ^tables}} = Repo.query("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'")
   end
 end
