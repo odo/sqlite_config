@@ -2,13 +2,13 @@ defmodule SqliteConfig do
 
   alias SqliteConfig.{StageRepo, Repo}
 
-  def stage_and_deploy(schema_sql, staging_fun) do
+  def stage_and_deploy(schema_sql, staging_fun, target \\ Repo) do
     with {:ok, _pid} <- reset_repo(StageRepo),
          {:ok, _} <- StageRepo.query(schema_sql),
           :ok <- execute_staging_fun(staging_fun),
-         {:ok, _pid } <- reset_repo(Repo),    
-         {:ok, _} <- Repo.query(schema_sql),
-         {:ok, _} <- Repo.query("PRAGMA query_only = ON") do
+         {:ok, _pid } <- reset_repo(target),    
+         {:ok, _} <- target.query(schema_sql),
+         {:ok, _} <- target.query("PRAGMA query_only = ON") do
       :ok
     end
   end
