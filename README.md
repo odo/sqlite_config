@@ -1,21 +1,44 @@
 # SqliteConfig
 
-**TODO: Add description**
+This library provides a Ecto repository `SqliteConfig.Repo` where you can dynamically load configuration data during runtime. Data is assumed to be read-only.
 
-## Installation
+Data is provided as SQL dumps. Each new version of the databased is first staged in a separate staging repo so it can be validated before been loaded to the main repo.
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `sqlite_config` to your list of dependencies in `mix.exs`:
+Example:
+```Elixir
+    dump =
+    """
+    create table foo (bar int);
+    create table bar (foo int);
+    insert into foo values (1);
+    insert into bar values (2);
+    """
 
-```elixir
-def deps do
-  [
-    {:sqlite_config, "~> 0.1.0"}
-  ]
-end
-```
+    :ok = SqliteConfig.stage_and_deploy(
+      dump,
+      fn(repo) ->
+        {:ok, %Exqlite.Result{rows: [[1]]}} = repo.query("select * from foo")
+        {:ok, %Exqlite.Result{rows: [[2]]}} = repo.query("select * from bar")
+      end
+    )
 
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at <https://hexdocs.pm/sqlite_config>.
+    SqliteConfig.Repo.query("SELECT * FROM foo")
+    > {:ok, %Exqlite.Result{command: :execute, columns: ["bar"], rows: [[1]], num_rows: 1}}
+    ```
 
+If the validation function crashes or returns an error, the repo is not changed:
+
+```Elixir
+    dump = ""
+
+    :ok = SqliteConfig.stage_and_deploy(
+      dump,
+      fn(repo) ->
+        {:ok, %Exqlite.Result{rows: [[1]]}} = repo.query("select * from foo")
+        {:ok, %Exqlite.Result{rows: [[2]]}} = repo.query("select * from bar")
+      end
+    )
+
+    SqliteConfig.Repo.query("SELECT * FROM foo")
+    > {:ok, %Exqlite.Result{command: :execute, columns: ["bar"], rows: [[1]], num_rows: 1}}
+    ```
