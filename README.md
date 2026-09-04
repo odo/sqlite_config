@@ -24,20 +24,28 @@ Example:
 
     SqliteConfig.Repo.query("SELECT * FROM foo")
     > {:ok, %Exqlite.Result{command: :execute, columns: ["bar"], rows: [[1]], num_rows: 1}}
-    ```
+```
 
 If the validation function crashes or returns an error, the repo is not changed:
 
 ```Elixir
     dump = ""
 
-    :ok = SqliteConfig.stage_and_deploy(
+    SqliteConfig.stage_and_deploy(
       dump,
       fn(repo) ->
         {:ok, %Exqlite.Result{rows: [[1]]}} = repo.query("select * from foo")
         {:ok, %Exqlite.Result{rows: [[2]]}} = repo.query("select * from bar")
       end
     )
+    > {:error,
+        %MatchError{
+          term: {:error,
+           %Exqlite.Error{
+             message: "no such table: foo",
+             statement: "select * from foo"
+           }}
+        }}
 
     SqliteConfig.Repo.query("SELECT * FROM foo")
     > {:ok, %Exqlite.Result{command: :execute, columns: ["bar"], rows: [[1]], num_rows: 1}}
