@@ -1,7 +1,7 @@
 import Config
 
 config :sqlite_config,
-  ecto_repos: [SqliteConfig.Repo]
+  ecto_repos: [SqliteConfig.Repo, SqliteConfig.StageRepo]
 
 config :sqlite_config, SqliteConfig.Repo,
   pool_size: 1,

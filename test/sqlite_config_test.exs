@@ -16,7 +16,7 @@ defmodule SqliteConfigTest do
   end
 
   test "accepts new schema" do
-    assert :ok == SqliteConfig.stage_and_deploy(
+    :ok = SqliteConfig.stage_and_deploy(
       "create table foo (bar int)",
       fn(repo) ->
         {:ok, _} = repo.query("insert into foo values (1)")
