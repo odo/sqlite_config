@@ -46,16 +46,8 @@ defmodule SqliteConfig do
   end
 
   defp remove_schema(repo) do
-    repo.query("PRAGMA query_only = OFF")
-    {:ok, %{rows: rows}} =
-      repo.query("SELECT name, type FROM sqlite_master WHERE type IN ('table','view') AND name NOT LIKE 'sqlite_%'")
-
-    Enum.each(
-      rows,
-      fn([name, type]) ->
-        Ecto.Adapters.SQL.query!(repo, ~s(DROP #{type} IF EXISTS "#{name}"), [])
-      end
-    )
+    Supervisor.terminate_child(SqliteConfig.Supervisor, repo)
+    Supervisor.restart_child(SqliteConfig.Supervisor, repo)
   end
 
 end
