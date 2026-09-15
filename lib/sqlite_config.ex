@@ -30,11 +30,10 @@ defmodule SqliteConfig do
       sql_dump
       |> String.replace("\n", "")
       |> String.split(";", trim: true)
-      |> IO.inspect
       |> Enum.reduce_while(
         {:ok, 0},
         fn(statement, {:ok, count}) ->
-          case repo.query(statement) do
+          case repo.query(statement) do        
             {:ok, _} -> {:cont, {:ok, count + 1}}
             {:error, error} -> {:halt, {:error, error}}
           end
